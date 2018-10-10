@@ -7,3 +7,7 @@ cmake_install.cmake
 #exe
 Test
 .vscode
+
+*.jpg
+
+balic
