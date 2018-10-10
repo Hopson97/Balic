@@ -1,23 +1,32 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 
-int main() {
-    sf::RenderWindow window({1280, 720}, "SFML", sf::Style::Default);
-    window.setFramerateLimit(60);
 
-    while (window.isOpen()) {
-        sf::Event e;
-        while (window.pollEvent(e)) {
-            switch(e.type) {
-                case sf::Event::Closed:
-                    window.close();
-                    break;
-                default:
-                    break;
-            }
-        }
-        window.clear();
+void linearCompress(const sf::Image& originalImage, sf::Image& newImage) {
 
-        window.display();
+}
+
+int main(int argc, char** argv) {
+    std::string imgName;
+    if (argc > 1) {
+        imgName = argv[1];
     }
+    else {
+        std::cout << "Please input an image.\n";
+        std::cout << "balic <image_name>\n";
+        return -1;
+    }
+
+    sf::Image originalImage;
+    if (!originalImage.loadFromFile(imgName)) {
+        return -1;
+    }
+
+    unsigned width = originalImage.getSize().x;
+    unsigned height = originalImage.getSize().y;
+
+    sf::Image newImage;
+    newImage.create(width, height);
+
+    linearCompress(originalImage, newImage);
 }
