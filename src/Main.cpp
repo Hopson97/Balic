@@ -7,7 +7,7 @@
 std::mutex mu;
 
 bool isDifferent(sf::Color a, sf::Color b) {
-    constexpr uint8_t diff = 30;
+    constexpr uint8_t diff = 20;
     return 
         std::abs(a.r - b.r) > diff ||
         std::abs(a.g - b.g) > diff ||    
@@ -57,7 +57,7 @@ void floodFillCompress(const sf::Image& originalImage,
     newImage.setPixel(x, y, fillColour);
     mu.unlock();
     visitedpxls[index] = true; 
-    std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+    //std::this_thread::sleep_for(std::chrono::nanoseconds(1));
 
     if (x == width - 1) return;
     floodFillCompress(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls);
@@ -79,6 +79,7 @@ void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned
             if (!visitedpxls[y * width + x]) {
                 activeColour = originalImage.getPixel(x, y);
                 floodFillCompress(originalImage, newImage, activeColour, x, y, width, height, visitedpxls);
+                std::this_thread::sleep_for(std::chrono::microseconds(10));
             }
         }
     }
@@ -86,15 +87,15 @@ void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned
 
 void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
     mu.lock();
-    sf::RenderWindow window({originalImage.getSize().x, originalImage.getSize().y}, "Paint");
+    sf::RenderWindow window({originalImage.getSize().x * 2, originalImage.getSize().y * 2}, "Paint");
     window.setFramerateLimit(60);
     sf::Texture textureA;
     sf::Texture textureB;
 
     textureA.loadFromImage(originalImage);
     textureB.loadFromImage(newImage);
-    float w = originalImage.getSize().x;
-    float y = originalImage.getSize().y;
+    float w = originalImage.getSize().x * 2;
+    float y = originalImage.getSize().y * 2;
 
     sf::RectangleShape shapeA({w, y});
     sf::RectangleShape shapeB({w, y});
@@ -113,14 +114,11 @@ void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
         mu.unlock();
         textureB.loadFromImage(newImage);
         mu.lock();
-        window.draw(shapeA);
+        //window.draw(shapeA);
         window.draw(shapeB);
-
-
 
         window.display();
     }
-
 }
 
 int main(int argc, char** argv) {
@@ -144,15 +142,14 @@ int main(int argc, char** argv) {
 
     sf::Image newImage;
     newImage.create(width, height, sf::Color::Transparent);
-
     std::thread thread ([&]() {
         visualise(originalImage, newImage);
     });
-    std::cout << "p\n";
 
     floodCompress(originalImage, newImage, width, height);
     //linearCompress(originalImage, newImage, width, height);
     newImage.saveToFile("out.jpg"); 
 
+    std::cout << "DONE\n";
     thread.join();
 }

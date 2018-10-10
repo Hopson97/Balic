@@ -9,5 +9,7 @@ Test
 .vscode
 
 *.jpg
+*.jpeg
+*.png
 
 balic
