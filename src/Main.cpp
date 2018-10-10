@@ -1,11 +1,13 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <vector>
 
 bool isDifferent(sf::Color a, sf::Color b) {
+    constexpr uint8_t diff = 60;
     return 
-        std::abs(a.r - b.r) > 50 ||
-        std::abs(a.g - b.g) > 50 ||    
-        std::abs(a.b - b.b) > 50;
+        std::abs(a.r - b.r) > diff ||
+        std::abs(a.g - b.g) > diff ||    
+        std::abs(a.b - b.b) > diff;
 }
 
 void linearCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height) {
@@ -34,6 +36,43 @@ void linearCompress(const sf::Image& originalImage, sf::Image& newImage, unsigne
     std::cout << "New compress poop: " << newChnages << "\n";
 }
 
+void floodFillCompress(const sf::Image& originalImage, 
+                sf::Image& newImage, 
+                sf::Color fillColour, 
+                unsigned x, unsigned y, 
+                unsigned width, unsigned height,
+                std::vector<bool>& visitedpxls) {
+    if (visitedpxls[y * width + x]) return;
+    if (isDifferent(fillColour, originalImage.getPixel(x, y))) return;
+    
+    newImage.setPixel(x, y, fillColour);
+    visitedpxls[y * width + x] = true; 
+
+    if (x + 1 > width - 1) return;
+    floodFillCompress(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls);
+    if (x == 0) return;
+    floodFillCompress(originalImage, newImage, fillColour, x - 1, y, width, height, visitedpxls);
+    if (y + 1 > height - 1) return;
+    floodFillCompress(originalImage, newImage, fillColour, x, y + 1, width, height, visitedpxls);
+    if (y == 0) return;
+    floodFillCompress(originalImage, newImage, fillColour, x, y - 1, width, height, visitedpxls);
+}
+
+void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height) {
+    sf::Color activeColour;
+    std::vector<bool> visitedpxls(width * height);
+    std::fill(visitedpxls.begin(), visitedpxls.end(), false);
+
+    for (unsigned y = 0; y < height - 1; y++) {
+        for (unsigned x = 0; x < width - 1; x++) {
+            if (!visitedpxls[y * width + x]) {
+                activeColour = originalImage.getPixel(x, y);
+                floodFillCompress(originalImage, newImage, activeColour, x, y, width, height, visitedpxls);
+            }
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     std::string imgName;
     if (argc > 1) {
@@ -56,7 +95,7 @@ int main(int argc, char** argv) {
     sf::Image newImage;
     newImage.create(width, height);
 
-    linearCompress(originalImage, newImage, width, height);
+    floodCompress(originalImage, newImage, width, height);
 
     newImage.saveToFile("out.jpg");
 }
