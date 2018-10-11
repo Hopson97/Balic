@@ -37,7 +37,7 @@ Example:
 
 ## Example
 
-
+<img src="https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg" width="300" height="242">
 
 ![ChinaTown](https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg =300x242) ![ChinaTownBalic](https://i.imgur.com/tAchXKD.gif =300x242)
 
