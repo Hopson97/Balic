@@ -13,7 +13,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 #Define the executable
-add_executable(${PROJECT_NAME} src/Main.cpp)
+add_executable(${PROJECT_NAME} 
+    src/Main.cpp
+    src/ConcurrentFloodFillCompress.cpp
+    src/FloodFillCompress.cpp 
+    src/Util.cpp
+    src/LinearCompress.cpp
+)
 
 SET(ADDITIONAL_LINK_FLAGS)
 if(UNIX)
