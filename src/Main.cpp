@@ -4,7 +4,7 @@
 #include <thread>
 #include <mutex>
 
-std::mutex mu;
+std::mutex mutex;
 
 bool isDifferent(sf::Color a, sf::Color b) {
     uint8_t difference = 30;
@@ -17,23 +17,19 @@ bool isDifferent(sf::Color a, sf::Color b) {
 void linearCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height) {
     sf::Color activeColour;
     bool isNewColourNeeded = true;
-    int newChnages = 0;
 
     for (unsigned y = 0; y < height - 1; y++) {
         for (unsigned x = 0; x < width - 1; x++) {
             if (isNewColourNeeded) {
                 activeColour = originalImage.getPixel(x, y);
-                mu.lock();
+                std::lock_guard<std::mutex> lock(mutex);
                 newImage.setPixel(x, y, activeColour);
-                mu.unlock();
                 isNewColourNeeded = false;
             }
 
             if (!isDifferent(activeColour, originalImage.getPixel(x + 1, y))) {
-                mu.lock();
+                std::lock_guard<std::mutex> lock(mutex);
                 newImage.setPixel(x + 1, y, activeColour);
-                mu.unlock();
-                newChnages++;
             }
             else {
                 isNewColourNeeded = true;
@@ -52,11 +48,12 @@ void floodFillCompress(const sf::Image& originalImage,
     size_t index = y * width + x;
     if (visitedpxls[index]) return;
     if (isDifferent(fillColour, originalImage.getPixel(x, y))) return;
-    mu.lock();
-    newImage.setPixel(x, y, fillColour);
-    mu.unlock();
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        newImage.setPixel(x, y, fillColour);
+    }
     visitedpxls[index] = true; 
-    //std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+    //std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 
     if (x == width - 1) return;
     floodFillCompress(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls);
@@ -78,14 +75,14 @@ void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned
             if (!visitedpxls[y * width + x]) {
                 activeColour = originalImage.getPixel(x, y);
                 floodFillCompress(originalImage, newImage, activeColour, x, y, width, height, visitedpxls);
-                std::this_thread::sleep_for(std::chrono::microseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(3));
             }
         }
     }
 }
 
 void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
-    mu.lock();
+    mutex.lock();
     sf::RenderWindow window({originalImage.getSize().x * 2, originalImage.getSize().y * 2}, "Paint");
     window.setFramerateLimit(60);
     sf::Texture textureA;
@@ -101,7 +98,7 @@ void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
 
     shapeA.setTexture(&textureA);
     shapeB.setTexture(&textureB);
-    mu.unlock();
+    mutex.unlock();
     while (window.isOpen()) {
         sf::Event e;
         while (window.pollEvent(e)) {
@@ -110,9 +107,10 @@ void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
             }
         }
         window.clear();
-        mu.unlock();
-        textureB.loadFromImage(newImage);
-        mu.lock();
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            textureB.loadFromImage(newImage);
+        }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::V)) {
             window.draw(shapeA);
         }
@@ -154,8 +152,9 @@ int main(int argc, char** argv) {
 
     floodCompress(originalImage, newImage, width, height);
     //linearCompress(originalImage, newImage, width, height);
-    newImage.saveToFile(outputName); 
 
-    std::cout << "DONE\n";
+    std::cout << "Saving image...\n";
+    newImage.saveToFile(outputName); 
+    std::cout << "Image saved, program complete. Please close window to exit program\n";
     thread.join();
 }
