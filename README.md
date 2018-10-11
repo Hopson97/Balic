@@ -39,7 +39,7 @@ Example:
 
 
 
-![ChinaTown](https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg) ![ChinaTownBalic](https://i.imgur.com/tAchXKD.gif)
+![ChinaTown](https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg =300x242) ![ChinaTownBalic](https://i.imgur.com/tAchXKD.gif =300x242)
 
 
 Image source: https://streeteasy.com/blog/chinatown-still-nycs-best-real-estate-bargain/
