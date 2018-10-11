@@ -7,7 +7,7 @@
 std::mutex mutex;
 
 bool isDifferent(sf::Color a, sf::Color b) {
-    uint8_t difference = 30;
+    uint8_t difference = 40;
     return 
         std::abs(a.r - b.r) > difference ||
         std::abs(a.g - b.g) > difference ||    
@@ -53,7 +53,6 @@ void floodFillCompress(const sf::Image& originalImage,
         newImage.setPixel(x, y, fillColour);
     }
     visitedpxls[index] = true; 
-    //std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 
     if (x == width - 1) return;
     floodFillCompress(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls);
@@ -75,7 +74,7 @@ void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned
             if (!visitedpxls[y * width + x]) {
                 activeColour = originalImage.getPixel(x, y);
                 floodFillCompress(originalImage, newImage, activeColour, x, y, width, height, visitedpxls);
-                std::this_thread::sleep_for(std::chrono::milliseconds(3));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
     }
@@ -84,14 +83,16 @@ void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned
 void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
     mutex.lock();
     sf::RenderWindow window({originalImage.getSize().x * 2, originalImage.getSize().y * 2}, "Paint");
+    //sf::RenderWindow window({originalImage.getSize().x, originalImage.getSize().y}, "Balic");
+    //window.setPosition({150, 150});
     window.setFramerateLimit(60);
     sf::Texture textureA;
     sf::Texture textureB;
 
     textureA.loadFromImage(originalImage);
     textureB.loadFromImage(newImage);
-    float w = originalImage.getSize().x * 2;
-    float y = originalImage.getSize().y * 2;
+    float w = window.getSize().x;
+    float y = window.getSize().y;
 
     sf::RectangleShape shapeA({w, y});
     sf::RectangleShape shapeB({w, y});
