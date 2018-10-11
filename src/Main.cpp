@@ -7,11 +7,11 @@
 std::mutex mu;
 
 bool isDifferent(sf::Color a, sf::Color b) {
-    constexpr uint8_t diff = 20;
+    uint8_t difference = 30;
     return 
-        std::abs(a.r - b.r) > diff ||
-        std::abs(a.g - b.g) > diff ||    
-        std::abs(a.b - b.b) > diff;
+        std::abs(a.r - b.r) > difference ||
+        std::abs(a.g - b.g) > difference ||    
+        std::abs(a.b - b.b) > difference;
 }
 
 void linearCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height) {
@@ -38,7 +38,6 @@ void linearCompress(const sf::Image& originalImage, sf::Image& newImage, unsigne
             else {
                 isNewColourNeeded = true;
             }
-            //std::cout << "poo\n";
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -114,7 +113,9 @@ void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
         mu.unlock();
         textureB.loadFromImage(newImage);
         mu.lock();
-        //window.draw(shapeA);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::V)) {
+            window.draw(shapeA);
+        }
         window.draw(shapeB);
 
         window.display();
@@ -123,14 +124,19 @@ void visualise(const sf::Image& originalImage, const sf::Image& newImage) {
 
 int main(int argc, char** argv) {
     std::string imgName;
-    if (argc > 1) {
+    std::string outputName;
+    if (argc > 2) {
         imgName = argv[1];
+        outputName = argv[2];
     }
     else {
         std::cout << "Please input an image.\n";
-        std::cout << "balic <image_name>\n";
+        std::cout << "balic <image_name> <output>\n";
+        std::cout << "EG: balic yosemite.jpg new_yostemite.jpg\n";
         return -1;
     }
+
+    std::cout << "Press V to view original image\n";
 
     sf::Image originalImage;
     if (!originalImage.loadFromFile(imgName)) {
@@ -148,7 +154,7 @@ int main(int argc, char** argv) {
 
     floodCompress(originalImage, newImage, width, height);
     //linearCompress(originalImage, newImage, width, height);
-    newImage.saveToFile("out.jpg"); 
+    newImage.saveToFile(outputName); 
 
     std::cout << "DONE\n";
     thread.join();
