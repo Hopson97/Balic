@@ -38,7 +38,7 @@ Example:
 ## Example
 
 
-<span><img src="https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg" width="300" height="242"></span><span><img src="https://i.imgur.com/tAchXKD.gif " width="300" height="242"></span>
+<span><img src="https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg" width="400" height="342"></span><span><img src="https://i.imgur.com/tAchXKD.gif " width="400" height="342"></span>
 
 Fullsize:
 
