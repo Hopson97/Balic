@@ -3,6 +3,9 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <atomic>
+#include <queue>
+#include <unordered_set>
 
 namespace {
     //Mutex for locking access to the image while it is being modified.
@@ -10,7 +13,7 @@ namespace {
 
     //Return true if 2 colours have a big difference
     bool isDifferent(sf::Color a, sf::Color b) {
-        uint8_t difference = 25;
+        uint8_t difference = 50;
         return 
             std::abs(a.r - b.r) > difference ||
             std::abs(a.g - b.g) > difference ||    
@@ -44,6 +47,7 @@ namespace {
     }
 
     //"compresses" using flood fill
+    template <bool Pause>
     void floodFillCompress(const sf::Image& originalImage, 
                     sf::Image& newImage, 
                     sf::Color fillColour, 
@@ -56,30 +60,100 @@ namespace {
         {
             std::lock_guard<std::mutex> lock(mutex);
             newImage.setPixel(x, y, fillColour);
+            visitedpxls[index] = true; 
         }
-        visitedpxls[index] = true; 
+        if constexpr (Pause) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
 
         if (x == width - 1) return;
-        floodFillCompress(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls);
+        floodFillCompress<Pause>(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls);
         if (x == 0) return;
-        floodFillCompress(originalImage, newImage, fillColour, x - 1, y, width, height, visitedpxls);
+        floodFillCompress<Pause>(originalImage, newImage, fillColour, x - 1, y, width, height, visitedpxls);
         if (y == height - 1) return;
-        floodFillCompress(originalImage, newImage, fillColour, x, y + 1, width, height, visitedpxls);
+        floodFillCompress<Pause>(originalImage, newImage, fillColour, x, y + 1, width, height, visitedpxls);
         if (y == 0) return;
-        floodFillCompress(originalImage, newImage, fillColour, x, y - 1, width, height, visitedpxls);
+        floodFillCompress<Pause>(originalImage, newImage, fillColour, x, y - 1, width, height, visitedpxls);
+    }
+
+    struct FloodSection {
+        unsigned startX, startY;
+        sf::Color color;
+    };
+
+    struct IsColourEqual {
+        bool operator()(const sf::Color& colourA, const sf::Color& colourB) const {
+            return  colourA.r == colourB.r &&
+                    colourA.g == colourB.g &&
+                    colourA.b == colourB.b;
+        }
+    };
+
+    struct HashColor {
+    public:
+        size_t operator()(const sf::Color& col) const {
+            return (std::hash<int>()(col.r) | std::hash<int>()(col.g) ^ std::hash<uint8_t>()(col.b));
+        }
+    };
+
+    void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height) {
+        std::vector<bool> visitedpxls(width * height);
+        std::fill(visitedpxls.begin(), visitedpxls.end(), false);
+
+        std::unordered_set<sf::Color, HashColor, IsColourEqual> cols;
+        std::queue<FloodSection> sectionQueue;
+        std::atomic<bool> complete = false;
+        std::vector<std::thread> threads;
+        std::mutex queueAccess;
+        for (int i = 0; i < 4; i++) {
+            threads.emplace_back([&]() {
+                FloodSection sect;
+                while (!complete) {
+                    //std::cout << "doing\n";
+                    if (!sectionQueue.empty()) {
+                        {
+                            //std::cout << "Doing lol\n";
+                            std::lock_guard<std::mutex> mu(queueAccess);
+                            sect = sectionQueue.back();
+                            sectionQueue.pop();
+                        }
+                        floodFillCompress<true>(originalImage, newImage, sect.color, sect.startX, sect.startY, width, height, visitedpxls);
+                    }
+                }
+            });
+        }
+
+        for (unsigned y = 0; y < height - 1; y++) {
+            for (unsigned x = 0; x < width - 1; x++) {
+                if (!visitedpxls[y * width + x]) {
+                    auto c = originalImage.getPixel(x, y);
+                    if (cols.find(c) == cols.end()) {
+                        std::lock_guard<std::mutex> mu(queueAccess);
+                        sectionQueue.push({x, y, originalImage.getPixel(x, y)});
+                        cols.emplace(c);
+                    }
+
+                    //floodFillCompress(originalImage, newImage, c, x, y, width, height, visitedpxls);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+            }
+        }
+
+        complete = true;
+        for (auto& thread : threads) {
+            thread.join();
+        }
     }
 
     void floodCompress(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height) {
-        sf::Color activeColour;
         std::vector<bool> visitedpxls(width * height);
         std::fill(visitedpxls.begin(), visitedpxls.end(), false);
 
         for (unsigned y = 0; y < height - 1; y++) {
             for (unsigned x = 0; x < width - 1; x++) {
                 if (!visitedpxls[y * width + x]) {
-                    activeColour = originalImage.getPixel(x, y);
-                    floodFillCompress(originalImage, newImage, activeColour, x, y, width, height, visitedpxls);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    floodFillCompress<false>(originalImage, newImage, originalImage.getPixel(x, y), x, y, width, height, visitedpxls);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(3));
                 }
             }
         }
@@ -153,8 +227,8 @@ int main(int argc, char** argv) {
     sf::Image newImage;
     newImage.create(width, height, sf::Color::Transparent);
     std::thread thread ([&]() {
-        linearCompress(originalImage, newImage, width, height);
-        //floodCompress(originalImage, newImage, width, height);
+        //linearCompress(originalImage, newImage, width, height);
+        floodCompress(originalImage, newImage, width, height);
         std::cout << "Finished!";
         std::cout << "Saving image...\n";
         newImage.saveToFile(outputName); 
