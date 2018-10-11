@@ -153,14 +153,14 @@ int main(int argc, char** argv) {
     sf::Image newImage;
     newImage.create(width, height, sf::Color::Transparent);
     std::thread thread ([&]() {
-        visualise(originalImage, newImage);
+        floodCompress(originalImage, newImage, width, height);
+        std::cout << "Finished!";
+        std::cout << "Saving image...\n";
+        newImage.saveToFile(outputName); 
+        std::cout << "Image saved, program complete. Please close window to exit program\n";
+        //linearCompress(originalImage, newImage, width, height);
     });
 
-    floodCompress(originalImage, newImage, width, height);
-    //linearCompress(originalImage, newImage, width, height);
-
-    std::cout << "Saving image...\n";
-    newImage.saveToFile(outputName); 
-    std::cout << "Image saved, program complete. Please close window to exit program\n";
+    visualise(originalImage, newImage);
     thread.join();
 }
