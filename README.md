@@ -41,12 +41,19 @@ Example:
 
 ## Example
 
+Flood fill compress:
 
 <span><img src="https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg" width="400" height="342"></span><span><img src="https://i.imgur.com/tAchXKD.gif " width="400" height="342"></span>
 
 Fullsize:
 
 ![Balic](https://i.imgur.com/tAchXKD.gif)
+
+Line Compression:
+
+![china_town_lines](https://i.imgur.com/JVhB3An.jpg)
+
+
 
 
 Image source: https://streeteasy.com/blog/chinatown-still-nycs-best-real-estate-bargain/
