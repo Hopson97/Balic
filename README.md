@@ -37,8 +37,8 @@ Example:
 
 ## Example
 
-<img src="https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg" width="600" height="484">
-<img src="https://i.imgur.com/tAchXKD.gif " width="600" height="484">
+
+<span><img src="https://wp.zillowstatic.com/streeteasy/2/Chinatown-Madhu-Nair-flickr.jpg" width="600" height="484"></span><span><img src="https://i.imgur.com/tAchXKD.gif " width="600" height="484"></span>
 
 
 Image source: https://streeteasy.com/blog/chinatown-still-nycs-best-real-estate-bargain/
