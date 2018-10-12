@@ -4,6 +4,7 @@
 #include <queue>
 #include <mutex>
 #include <atomic>
+#include <iostream>
 
 #include "FloodFill.h"
 
@@ -25,28 +26,34 @@ public:
     }
 };
 
+using ColourSet = std::unordered_set<sf::Color, HashColor, IsColourEqual>;
+
+bool isDiffInSet(const ColourSet& set, sf::Color color) {
+    for (auto c : set) {
+        if (isDifferent(c, color)) return true;
+    }
+    return false;
+}
+
 void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height, std::mutex& imgMutex) {
     std::vector<bool> visitedpxls(width * height);
     std::fill(visitedpxls.begin(), visitedpxls.end(), false);
-    std::unordered_set<sf::Color, HashColor, IsColourEqual> cols;
+    ColourSet cols;
     std::queue<FloodSection> sectionQueue;
     std::atomic<bool> complete = false;
     std::vector<std::thread> threads;
     std::mutex queueAccess;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
         threads.emplace_back([&]() {
             FloodSection sect;
             while (!complete) {
-                //std::cout << "doing\n";
-                if (!sectionQueue.empty()) {
-                    {
-                        //std::cout << "Doing lol\n";
-                        std::lock_guard<std::mutex> mu(queueAccess);
-                        sect = sectionQueue.back();
-                        sectionQueue.pop();
-                    }
-                    floodFill<true>(originalImage, newImage, sect.color, sect.startX, sect.startY, width, height, visitedpxls, imgMutex);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                if (!sectionQueue.empty()) {  
+                    std::lock_guard<std::mutex> mu(queueAccess);
+                    sect = sectionQueue.back();
+                    sectionQueue.pop();
                 }
+                floodFill<true>(originalImage, newImage, sect.color, sect.startX, sect.startY, width, height, visitedpxls, imgMutex);
             }
         });
     }
@@ -54,13 +61,13 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
         for (unsigned x = 0; x < width - 1; x++) {
             if (!visitedpxls[y * width + x]) {
                 auto c = originalImage.getPixel(x, y);
-                if (cols.find(c) == cols.end()) {
+               // if (isDiffInSet(cols, c)) {
                     std::lock_guard<std::mutex> mu(queueAccess);
                     sectionQueue.push({x, y, originalImage.getPixel(x, y)});
-                    cols.emplace(c);
-                }
+                  //  cols.emplace(c);
+              //  }
                 //floodFillCompress(originalImage, newImage, c, x, y, width, height, visitedpxls);
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
     }

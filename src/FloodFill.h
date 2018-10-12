@@ -14,8 +14,11 @@ void floodFill(const sf::Image& originalImage,
                 unsigned width, unsigned height,
                 std::vector<bool>& visitedpxls, std::mutex& imgMutex) {
     size_t index = y * width + x;
-    if (visitedpxls[index]) {
-        return;
+    {
+        std::lock_guard<std::mutex> lock(imgMutex);
+        if (visitedpxls[index]) {
+            return;
+        }
     }
     if (isDifferent(fillColour, originalImage.getPixel(x, y))) {
         return;
@@ -28,7 +31,7 @@ void floodFill(const sf::Image& originalImage,
     }
 
     if constexpr (Pause) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
     if (x == width - 1) return;
     floodFill<Pause>(originalImage, newImage, fillColour, x + 1, y, width, height, visitedpxls, imgMutex);
