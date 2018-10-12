@@ -16,7 +16,7 @@ namespace {
     //Allows visualisation of the image manipulation process
     void visualise(const sf::Image& originalImage, const sf::Image& newImage, std::mutex& imgMutex) {
         mutex.lock();
-        sf::RenderWindow window({originalImage.getSize().x * 2, originalImage.getSize().y * 2}, "Paint");
+        sf::RenderWindow window({originalImage.getSize().x * 1.5, originalImage.getSize().y * 1.5}, "Paint");
         window.setFramerateLimit(60);
         sf::Texture textureA;
         sf::Texture textureB;
@@ -57,13 +57,17 @@ namespace {
 int main(int argc, char** argv) {
     std::string imgName;
     std::string outputName;
-    if (argc > 2) {
+    if (argc > 1) {
         imgName = argv[1];
-        outputName = argv[2];
+        if (argc > 2) {
+            outputName = argv[2];
+        } else {
+            outputName = "balic_output.jpg";
+        }
     }
     else {
         std::cout << "Please input an image.\n";
-        std::cout << "balic <image_name> <output>\n";
+        std::cout << "balic <image_name> <output (optional)>\n";
         std::cout << "EG: balic yosemite.jpg new_yostemite.jpg\n";
         return -1;
     }
@@ -84,8 +88,8 @@ int main(int argc, char** argv) {
     std::thread thread ([&]() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         //linearCompress(originalImage, newImage, width, height, mutex);
-        floodCompress(originalImage, newImage, width, height, mutex);
-       // floodCompressConcurrent(originalImage, newImage, width, height, mutex);
+        //floodCompress(originalImage, newImage, width, height, mutex);
+        floodCompressConcurrent(originalImage, newImage, width, height, mutex);
         std::cout << "Finished!";
         std::cout << "Saving image...\n";
         newImage.saveToFile(outputName); 
