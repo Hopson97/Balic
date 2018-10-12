@@ -17,13 +17,15 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     std::vector<bool> visitedpxls(width * height);
     std::fill(visitedpxls.begin(), visitedpxls.end(), false);
     std::queue<FloodSection> sectionQueue;
-    std::atomic<bool> complete = false;
+    std::atomic<bool> completeTop = false;
+    std::atomic<bool> completeBottom = false;
     std::vector<std::thread> threads;
     std::mutex queueAccess;
+    //Init threads
     for (int i = 0; i < 4; i++) {
         threads.emplace_back([&]() {
             FloodSection sect;
-            while (!complete) {
+            while (!completeBottom && !completeBottom) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 if (!sectionQueue.empty()) {  
                     std::lock_guard<std::mutex> mu(queueAccess);
@@ -34,16 +36,33 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
             }
         });
     }
-    for (unsigned y = 0; y < height - 1; y++) {
-        for (unsigned x = 0; x < width - 1; x++) {
-            if (!visitedpxls[y * width + x]) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                std::lock_guard<std::mutex> mu(queueAccess);
-                sectionQueue.push({x, y, originalImage.getPixel(x, y)});
+
+    threads.emplace_back([&]() {
+        for (unsigned y = 0; y < height / 2; y++) {
+            for (unsigned x = 0; x < width - 1; x++) {
+                if (!visitedpxls[y * width + x]) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    std::lock_guard<std::mutex> mu(queueAccess);
+                    sectionQueue.push({x, y, originalImage.getPixel(x, y)});
+                }
             }
         }
-    }
-    complete = true;
+        completeTop = true;
+    });
+
+    threads.emplace_back([&]() {
+        for (unsigned y = height - 1; y >=  height / 2; y--) {
+            for (unsigned x = 0; x < width - 1; x++) {
+                if (!visitedpxls[y * width + x]) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    std::lock_guard<std::mutex> mu(queueAccess);
+                    sectionQueue.push({x, y, originalImage.getPixel(x, y)});
+                }
+            }
+        }
+        completeBottom = true;
+    });
+
     for (auto& thread : threads) {
         thread.join();
     }

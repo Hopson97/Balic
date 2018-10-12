@@ -12,10 +12,11 @@ void floodFill(const sf::Image& originalImage,
                 sf::Color fillColour, 
                 unsigned x, unsigned y, 
                 unsigned width, unsigned height,
-                std::vector<bool>& visitedpxls, std::mutex& imgMutex) {
+                std::vector<bool>& visitedpxls, 
+                std::mutex& imgMutex) {
     size_t index = y * width + x;
     {
-        std::lock_guard<std::mutex> lock(imgMutex);
+        //std::lock_guard<std::mutex> lock(imgMutex);
         if (visitedpxls[index]) {
             return;
         }
