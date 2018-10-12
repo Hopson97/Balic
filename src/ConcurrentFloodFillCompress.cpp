@@ -36,7 +36,7 @@ void addQueueThread(std::vector<std::thread>& queueUpdaterThreads, ConcurrentFlo
         for (unsigned y = yBegin ; y < yEnd; y++) {
             for (unsigned x = xBegin; x < xEnd; x++) {
                 if (!util.visitedPixels[y * width + x]) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    std::this_thread::sleep_for(std::chrono::microseconds(100));
                     std::lock_guard<std::mutex> mu(util.queueAccessMutex);
                     util.sectionQueue.push({x, y, util.originalImage.getPixel(x, y)});
                 }
@@ -45,17 +45,23 @@ void addQueueThread(std::vector<std::thread>& queueUpdaterThreads, ConcurrentFlo
     });
 }
 
+void joinThreadPool(std::vector<std::thread>& threads) {
+    for (auto& thread : threads) {
+        thread.join();
+    }
+}
+
 void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage, unsigned width, unsigned height, std::mutex& imgMutex) {
     std::mutex queueAccess;
     ConcurrentFloodUtilities util(originalImage, queueAccess);
-    std::vector<std::thread> threads;
+    std::vector<std::thread> workers;
     std::vector<std::thread> queueUpdaterThreads;
 
     std::atomic<bool> complete = false;
     
     //Init threads
-    for (int i = 0; i < 8; i++) {
-        threads.emplace_back([&]() {
+    for (int i = 0; i < 16; i++) {
+        workers.emplace_back([&]() {
             FloodSection sect;
             while (!complete) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -79,13 +85,7 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     addQueueThread(queueUpdaterThreads, util, w / 2,    0,      w,      h / 2);
     addQueueThread(queueUpdaterThreads, util, 0,        h / 2,  w / 2,  h);
 
-    for (auto& thread : queueUpdaterThreads) {
-        thread.join();
-    }
-    std::cout << "DONE\n";
+    joinThreadPool(queueUpdaterThreads);
     complete = true;
-
-    for (auto& thread : threads) {
-        thread.join();
-    }
+    joinThreadPool(workers);
 }
