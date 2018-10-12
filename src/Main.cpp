@@ -82,9 +82,10 @@ int main(int argc, char** argv) {
     sf::Image newImage;
     newImage.create(width, height, sf::Color::Transparent);
     std::thread thread ([&]() {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         //linearCompress(originalImage, newImage, width, height, mutex);
-        //floodCompress(originalImage, newImage, width, height, mutex);
-        floodCompressConcurrent(originalImage, newImage, width, height, mutex);
+        floodCompress(originalImage, newImage, width, height, mutex);
+       // floodCompressConcurrent(originalImage, newImage, width, height, mutex);
         std::cout << "Finished!";
         std::cout << "Saving image...\n";
         newImage.saveToFile(outputName); 
