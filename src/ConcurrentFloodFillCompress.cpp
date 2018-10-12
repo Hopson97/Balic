@@ -54,7 +54,7 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     std::atomic<bool> complete = false;
     
     //Init threads
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 8; i++) {
         threads.emplace_back([&]() {
             FloodSection sect;
             while (!complete) {
