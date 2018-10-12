@@ -58,9 +58,9 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     std::vector<std::thread> queueUpdaterThreads;
 
     std::atomic<bool> complete = false;
-    
+    sf::Clock clock;
     //Init threads
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 32; i++) {
         workers.emplace_back([&]() {
             FloodSection sect;
             while (!complete) {
@@ -86,6 +86,7 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     addQueueThread(queueUpdaterThreads, util, 0,        h / 2,  w / 2,  h);
 
     joinThreadPool(queueUpdaterThreads);
+    std::cout << "\nDone. Time taken: " << clock.getElapsedTime().asSeconds() << "secs.\n\n\n";
     complete = true;
     joinThreadPool(workers);
 }
