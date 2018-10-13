@@ -21,7 +21,7 @@ sudo apt-get install libsfml-dev
 Building:
 
 ```
-git clone https://github.com/Hopson97/Pixelator.git
+git clone https://github.com/Hopson97/Balic.git
 cd Balic
 cmake .
 make
