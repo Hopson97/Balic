@@ -29,12 +29,13 @@ struct ConcurrentFloodUtilities {
 };
 
 void addQueueThread(std::vector<std::thread>& queueUpdaterThreads, ConcurrentFloodUtilities& util, 
-    unsigned xBegin, unsigned yBegin, unsigned xEnd, unsigned yEnd) 
+    unsigned xBegin, unsigned yBegin, unsigned xEnd, unsigned yEnd,
+    bool goRight, bool goDown) 
 {
     queueUpdaterThreads.emplace_back([=, &util]() {
         auto width = util.originalImage.getSize().x;
-        for (unsigned y = yBegin ; y < yEnd; y++) {
-            for (unsigned x = xBegin; x < xEnd; x++) {
+        for (unsigned y = yBegin; goDown ? (y < yEnd) : (y >= yEnd); goDown ? (y++) : (y--)) {
+            for (unsigned x = xBegin; goRight ? (x < xEnd) : (x >= xEnd); goRight? (x++) : (x--)) {
                 if (!util.visitedPixels[y * width + x]) {
                     std::this_thread::sleep_for(std::chrono::microseconds(100));
                     std::lock_guard<std::mutex> mu(util.queueAccessMutex);
@@ -60,7 +61,7 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     std::atomic<bool> complete = false;
     sf::Clock clock;
     //Init threads
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 64; i++) {
         workers.emplace_back([&]() {
             FloodSection sect;
             while (!complete) {
@@ -79,11 +80,11 @@ void floodCompressConcurrent(const sf::Image& originalImage, sf::Image& newImage
     }
 
     auto w = originalImage.getSize().x;
-    auto h = originalImage.getSize().y;
-    addQueueThread(queueUpdaterThreads, util, 0,        0,      w / 2,  h / 2);
-    addQueueThread(queueUpdaterThreads, util, w / 2,    h / 2,  w,      h);
-    addQueueThread(queueUpdaterThreads, util, w / 2,    0,      w,      h / 2);
-    addQueueThread(queueUpdaterThreads, util, 0,        h / 2,  w / 2,  h);
+    auto h = originalImage.getSize().y;//     X-BEGIN   Y-BEGIN     X-END       Y-END
+    addQueueThread(queueUpdaterThreads, util, 0,        0,          w / 2,      h / 2,  true,   true);
+    addQueueThread(queueUpdaterThreads, util, w - 1,    h - 1,      w / 2,      h / 2,  false,  false);
+    addQueueThread(queueUpdaterThreads, util, 0,        h - 1,      w / 2,      h / 2,  true,   false);
+    addQueueThread(queueUpdaterThreads, util, w,        0,          w / 2,      h / 2,  false,  true);
 
     joinThreadPool(queueUpdaterThreads);
     std::cout << "\nDone. Time taken: " << clock.getElapsedTime().asSeconds() << "secs.\n\n\n";
