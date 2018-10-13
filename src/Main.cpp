@@ -90,10 +90,9 @@ int main(int argc, char** argv) {
         //linearCompress(originalImage, newImage, width, height, mutex);
         //floodCompress(originalImage, newImage, width, height, mutex);
         floodCompressConcurrent(originalImage, newImage, width, height, mutex);
-        std::cout << "Finished!";
-        std::cout << "Saving image...\n";
+        std::cout << "Saving image...\n\n";
         newImage.saveToFile(outputName); 
-        std::cout << "Image saved, program complete. Please close window to exit program\n";
+        std::cout << "Image saved, program complete. Please close window to exit program.\n\n";
     });
 
     visualise(originalImage, newImage, mutex);
