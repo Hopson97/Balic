@@ -4,7 +4,7 @@ Bad and Lossy Image Compressor
 
 A program that "compresses" the quality of an image, allowing you view the process while it happens.
 
-It does this by looking at pixel, and then doing a recursive flood fill until it cannot find anymore pixels of a similiar colour. This continues until the entire image has been "compressed".
+It does this by looking at pixel, and then doing a recursive flood fill until it cannot find anymore pixels of a similar colour. This continues until the entire image has been "compressed".
 
 This program does actually compress the image, it is just a name for a joke, as image compressing usually results in loss of image quality.
 
@@ -57,3 +57,4 @@ Line Compression:
 
 
 Image source: https://streeteasy.com/blog/chinatown-still-nycs-best-real-estate-bargain/
+
